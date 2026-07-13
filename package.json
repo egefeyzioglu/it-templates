@@ -1,0 +1,23 @@
+{
+  "name": "it-ticket-templates",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wxt --browser chrome",
+    "build": "wxt build --browser chrome",
+    "compile": "wxt prepare && tsc --noEmit",
+    "zip": "wxt zip --browser chrome"
+  },
+  "dependencies": {
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@wxt-dev/module-react": "^1.2.2",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "typescript": "^5.9.0",
+    "wxt": "^0.20.27"
+  }
+}
