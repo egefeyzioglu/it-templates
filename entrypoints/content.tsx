@@ -1,12 +1,19 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import { forwardPaletteHotkey } from '../lib/hotkey';
 import { TemplatePalette } from '../ui/TemplatePalette';
 import styles from '../ui/styles.css?inline';
 
 export default defineContentScript({
   matches: ['*://*.service-now.com/*', 'file:///*'],
   runAt: 'document_idle',
+  allFrames: true,
   main() {
+    if (window.self !== window.top) {
+      forwardPaletteHotkey(window);
+      return;
+    }
+
     if (document.getElementById('it-ticket-templates-root')) return;
 
     const host = document.createElement('div');

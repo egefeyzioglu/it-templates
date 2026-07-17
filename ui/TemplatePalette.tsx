@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { isPaletteHotkey, TOGGLE_MESSAGE_TYPE } from '../lib/hotkey';
 import { applyTicketFields } from '../lib/servicenow';
 import { searchTemplates, type ResolvedTemplate } from '../lib/templates';
 
@@ -41,7 +42,7 @@ export function TemplatePalette() {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.ctrlKey && event.code === 'Space') {
+      if (isPaletteHotkey(event)) {
         event.preventDefault();
         event.stopPropagation();
         setOpen((current) => !current);
@@ -65,6 +66,16 @@ export function TemplatePalette() {
     window.addEventListener('keydown', onKeyDown, true);
     return () => window.removeEventListener('keydown', onKeyDown, true);
   }, [open, results, selectedIndex]);
+
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if ((event.data as { type?: string } | null)?.type !== TOGGLE_MESSAGE_TYPE) return;
+      setOpen((current) => !current);
+    };
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, []);
 
   useEffect(() => {
     if (open) requestAnimationFrame(() => searchRef.current?.focus());

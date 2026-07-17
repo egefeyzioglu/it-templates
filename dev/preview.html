@@ -7,38 +7,24 @@
     <style>
       :root { font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #172033; background: #eef2f6; }
       * { box-sizing: border-box; }
-      body { margin: 0; }
-      .topbar { height: 54px; display: flex; align-items: center; gap: 18px; padding: 0 24px; background: #172b3a; color: #fff; }
+      html, body { height: 100%; margin: 0; }
+      body { display: flex; flex-direction: column; }
+      .topbar { flex: none; height: 54px; display: flex; align-items: center; gap: 18px; padding: 0 24px; background: #172b3a; color: #fff; }
       .topbar strong { font-size: 15px; }
       .crumb { color: #b9c8d3; font-size: 13px; }
-      main { width: min(1100px, calc(100vw - 48px)); margin: 28px auto; }
-      .ticket-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
-      h1 { margin: 0; font-size: 22px; }
-      .shortcut { color: #5d6b7d; font-size: 13px; }
-      .shortcut kbd { padding: 3px 6px; border: 1px solid #cbd3dc; border-radius: 4px; background: #fff; box-shadow: 0 1px 0 #b8c0cb; }
-      form { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 22px; padding: 24px; border: 1px solid #d1d9e2; border-radius: 8px; background: #fff; box-shadow: 0 2px 7px rgb(15 23 42 / 6%); }
-      label { display: flex; flex-direction: column; gap: 7px; color: #344256; font-size: 13px; font-weight: 650; }
-      label.wide { grid-column: 1 / -1; }
-      input, textarea, select { width: 100%; border: 1px solid #b8c3d0; border-radius: 4px; background: #fff; color: #172033; font: 14px/1.4 inherit; padding: 9px 10px; }
-      textarea { min-height: 112px; resize: vertical; }
-      input:focus, textarea:focus, select:focus { outline: 2px solid #78aef3; outline-offset: 1px; }
+      .shortcut { margin-left: auto; color: #b9c8d3; font-size: 13px; }
+      .shortcut kbd { padding: 2px 6px; border: 1px solid #46596a; border-radius: 4px; background: #223a4d; color: #fff; }
+      #stage { flex: 1; min-height: 0; }
     </style>
   </head>
   <body>
-    <div class="topbar"><strong>Service Desk</strong><span class="crumb">Incidents / Create</span></div>
-    <main>
-      <div class="ticket-header"><h1>Create Incident</h1><span class="shortcut">Press <kbd>Ctrl</kbd> + <kbd>Space</kbd> for templates</span></div>
-      <form>
-        <label class="wide">Short description<input name="short_description" /></label>
-        <label class="wide">Description<textarea name="description"></textarea></label>
-        <label class="wide">Work notes<textarea name="work_notes"></textarea></label>
-        <label>Category<select name="category"><option></option><option>Access</option><option>Network</option><option>Email</option><option>Software</option><option>Hardware</option><option>Security</option></select></label>
-        <label>Subcategory<input name="subcategory" /></label>
-        <label>Assignment group<input name="assignment_group" /></label>
-        <label>Impact<select name="impact"><option></option><option>1 - High</option><option>2 - Medium</option><option>3 - Low</option></select></label>
-        <label>Urgency<select name="urgency"><option></option><option>1 - High</option><option>2 - Medium</option><option>3 - Low</option></select></label>
-      </form>
-    </main>
+    <div class="topbar">
+      <strong>Service Desk</strong><span class="crumb">Incidents / Create</span>
+      <span class="shortcut">Press <kbd>Ctrl</kbd> + <kbd>Space</kbd> for templates</span>
+    </div>
+    <!-- preview.tsx fills the stage with nested shadow roots and a gsft_main-style
+         iframe holding the classic incident form, mirroring the Next Experience UI. -->
+    <div id="stage"></div>
     <div id="root"></div>
     <script type="module" src="./preview.tsx"></script>
   </body>
