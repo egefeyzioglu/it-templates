@@ -1,30 +1,47 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { isPaletteHotkey, TOGGLE_MESSAGE_TYPE } from '../lib/hotkey';
-import { applyTicketFields } from '../lib/servicenow';
-import { searchTemplates, type ResolvedTemplate } from '../lib/templates';
+import { useEffect, useMemo, useRef, useState } from "react";
+import { browser } from "wxt/browser";
+import { isPaletteHotkey, TOGGLE_MESSAGE_TYPE } from "../lib/hotkey";
+import { applyTicketFields } from "../lib/servicenow";
+import { loadTemplates, subscribeToTemplates } from "../lib/templateStorage";
+import {
+  defaultTemplates,
+  searchTemplates,
+  type ResolvedTemplate,
+  type TicketTemplate,
+} from "../lib/templates";
 
 const FIELD_NAMES: Record<string, string> = {
-  shortDescription: 'short description',
-  description: 'description',
-  workNotes: 'work notes',
-  category: 'category',
-  subcategory: 'subcategory',
-  assignmentGroup: 'assignment group',
-  impact: 'impact',
-  urgency: 'urgency',
+  shortDescription: "short description",
+  description: "description",
+  workNotes: "work notes",
+  category: "category",
+  subcategory: "subcategory",
+  assignmentGroup: "assignment group",
+  impact: "impact",
+  urgency: "urgency",
 };
 
 export function TemplatePalette() {
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState("");
+  const [templates, setTemplates] =
+    useState<TicketTemplate[]>(defaultTemplates);
   const searchRef = useRef<HTMLInputElement>(null);
-  const results = useMemo(() => searchTemplates(query), [query]);
+  const results = useMemo(
+    () => searchTemplates(query, templates),
+    [query, templates],
+  );
+
+  useEffect(() => {
+    void loadTemplates().then(setTemplates);
+    return subscribeToTemplates(setTemplates);
+  }, []);
 
   const close = () => {
     setOpen(false);
-    setQuery('');
+    setQuery("");
     setSelectedIndex(0);
   };
 
@@ -32,11 +49,13 @@ export function TemplatePalette() {
     const result = applyTicketFields(template.fields);
     close();
     if (result.applied.length) {
-      const applied = result.applied.map((key) => FIELD_NAMES[key]).join(', ');
-      const unavailable = result.missing.length ? ` ${result.missing.length} unavailable field${result.missing.length === 1 ? '' : 's'} skipped.` : '';
+      const applied = result.applied.map((key) => FIELD_NAMES[key]).join(", ");
+      const unavailable = result.missing.length
+        ? ` ${result.missing.length} unavailable field${result.missing.length === 1 ? "" : "s"} skipped.`
+        : "";
       setStatus(`Applied “${template.title}”: ${applied}.${unavailable}`);
     } else {
-      setStatus('No supported incident fields were found on this page.');
+      setStatus("No supported incident fields were found on this page.");
     }
   };
 
@@ -49,32 +68,37 @@ export function TemplatePalette() {
         return;
       }
       if (!open) return;
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         event.preventDefault();
         close();
-      } else if (event.key === 'ArrowDown') {
+      } else if (event.key === "ArrowDown") {
         event.preventDefault();
-        setSelectedIndex((current) => Math.min(current + 1, Math.max(results.length - 1, 0)));
-      } else if (event.key === 'ArrowUp') {
+        setSelectedIndex((current) =>
+          Math.min(current + 1, Math.max(results.length - 1, 0)),
+        );
+      } else if (event.key === "ArrowUp") {
         event.preventDefault();
         setSelectedIndex((current) => Math.max(current - 1, 0));
-      } else if (event.key === 'Enter' && results[selectedIndex]) {
+      } else if (event.key === "Enter" && results[selectedIndex]) {
         event.preventDefault();
         apply(results[selectedIndex]);
       }
     };
-    window.addEventListener('keydown', onKeyDown, true);
-    return () => window.removeEventListener('keydown', onKeyDown, true);
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
   }, [open, results, selectedIndex]);
 
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return;
-      if ((event.data as { type?: string } | null)?.type !== TOGGLE_MESSAGE_TYPE) return;
+      if (
+        (event.data as { type?: string } | null)?.type !== TOGGLE_MESSAGE_TYPE
+      )
+        return;
       setOpen((current) => !current);
     };
-    window.addEventListener('message', onMessage);
-    return () => window.removeEventListener('message', onMessage);
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
   }, []);
 
   useEffect(() => {
@@ -87,17 +111,30 @@ export function TemplatePalette() {
 
   useEffect(() => {
     if (!status) return;
-    const timeout = window.setTimeout(() => setStatus(''), 5000);
+    const timeout = window.setTimeout(() => setStatus(""), 5000);
     return () => window.clearTimeout(timeout);
   }, [status]);
 
   return (
     <>
       {open && (
-        <div className="backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && close()}>
-          <section className="palette" role="dialog" aria-modal="true" aria-label="IT ticket templates">
+        <div
+          className="backdrop"
+          role="presentation"
+          onMouseDown={(event) =>
+            event.target === event.currentTarget && close()
+          }
+        >
+          <section
+            className="palette"
+            role="dialog"
+            aria-modal="true"
+            aria-label="IT ticket templates"
+          >
             <header className="search-row">
-              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m21 21-4.35-4.35m2.35-5.15A7.5 7.5 0 1 1 4 11.5a7.5 7.5 0 0 1 15 0Z" /></svg>
+              <svg aria-hidden="true" viewBox="0 0 24 24">
+                <path d="m21 21-4.35-4.35m2.35-5.15A7.5 7.5 0 1 1 4 11.5a7.5 7.5 0 0 1 15 0Z" />
+              </svg>
               <input
                 ref={searchRef}
                 value={query}
@@ -108,7 +145,9 @@ export function TemplatePalette() {
               />
               <kbd>Esc</kbd>
             </header>
-            <div className="result-count">{results.length} template{results.length === 1 ? '' : 's'}</div>
+            <div className="result-count">
+              {results.length} template{results.length === 1 ? "" : "s"}
+            </div>
             <div className="results" role="listbox" aria-label="Templates">
               {results.map((template, index) => (
                 <button
@@ -116,17 +155,25 @@ export function TemplatePalette() {
                   type="button"
                   role="option"
                   aria-selected={index === selectedIndex}
-                  className={`template ${index === selectedIndex ? 'selected' : ''} ${template.depth ? 'child' : ''}`}
+                  className={`template ${index === selectedIndex ? "selected" : ""} ${template.depth ? "child" : ""}`}
                   onMouseEnter={() => setSelectedIndex(index)}
                   onClick={() => apply(template)}
                 >
-                  <span className="template-icon" aria-hidden="true">{template.depth ? '↳' : '◇'}</span>
+                  <span className="template-icon" aria-hidden="true">
+                    {template.depth ? "↳" : "◇"}
+                  </span>
                   <span className="template-copy">
                     <span className="template-title">{template.title}</span>
                     <span className="template-summary">{template.summary}</span>
-                    {template.parent && <span className="inherits">Inherits {template.parent.title}</span>}
+                    {template.parent && (
+                      <span className="inherits">
+                        Inherits {template.parent.title}
+                      </span>
+                    )}
                   </span>
-                  <span className="apply-hint">Apply <span>↵</span></span>
+                  <span className="apply-hint">
+                    Apply <span>↵</span>
+                  </span>
                 </button>
               ))}
               {!results.length && (
@@ -137,14 +184,34 @@ export function TemplatePalette() {
               )}
             </div>
             <footer>
-              <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
-              <span><kbd>Enter</kbd> apply</span>
+              <span>
+                <kbd>↑</kbd>
+                <kbd>↓</kbd> navigate
+              </span>
+              <span>
+                <kbd>Enter</kbd> apply
+              </span>
+              <button
+                className="settings-link"
+                type="button"
+                onClick={() =>
+                  void browser.tabs.create({
+                    url: browser.runtime.getURL("/options.html"),
+                  })
+                }
+              >
+                Settings
+              </button>
               <span className="brand">IT Templates</span>
             </footer>
           </section>
         </div>
       )}
-      {status && <div className="toast" role="status">{status}</div>}
+      {status && (
+        <div className="toast" role="status">
+          {status}
+        </div>
+      )}
     </>
   );
 }
