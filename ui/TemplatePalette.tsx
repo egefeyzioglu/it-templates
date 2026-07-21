@@ -12,14 +12,25 @@ import {
 } from "../lib/templates";
 
 const FIELD_NAMES: Record<string, string> = {
+  caller: "caller",
+  onBehalfOf: "on behalf of",
+  location: "location",
   shortDescription: "short description",
   description: "description",
+  additionalComments: "additional comments",
   workNotes: "work notes",
+  channel: "channel",
+  state: "state",
   category: "category",
   subcategory: "subcategory",
+  subcategory2: "subcategory 2",
+  subcategory3: "subcategory 3",
   assignmentGroup: "assignment group",
+  assignedTo: "assigned to",
   impact: "impact",
   urgency: "urgency",
+  resolutionCode: "resolution code",
+  resolutionNotes: "resolution notes",
 };
 
 export function TemplatePalette() {

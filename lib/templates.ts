@@ -1,12 +1,23 @@
 export type TicketFields = {
+  caller?: string;
+  onBehalfOf?: string;
+  location?: string;
   shortDescription?: string;
   description?: string;
+  additionalComments?: string;
   workNotes?: string;
+  channel?: string;
+  state?: string;
   category?: string;
   subcategory?: string;
+  subcategory2?: string;
+  subcategory3?: string;
   assignmentGroup?: string;
+  assignedTo?: string;
   impact?: string;
   urgency?: string;
+  resolutionCode?: string;
+  resolutionNotes?: string;
 };
 
 export type TicketTemplate = {

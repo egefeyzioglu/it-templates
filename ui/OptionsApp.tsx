@@ -15,14 +15,33 @@ const FIELDS: {
   label: string;
   multiline?: boolean;
 }[] = [
-  { key: "shortDescription", label: "Short description" },
-  { key: "description", label: "Description", multiline: true },
-  { key: "workNotes", label: "Work notes", multiline: true },
+  { key: "caller", label: "Caller" },
+  { key: "onBehalfOf", label: "On behalf of" },
+  { key: "location", label: "Location" },
+  { key: "channel", label: "Channel" },
+  { key: "state", label: "State" },
   { key: "category", label: "Category" },
-  { key: "subcategory", label: "Subcategory" },
+  { key: "subcategory", label: "Subcategory 1" },
+  { key: "subcategory2", label: "Subcategory 2" },
+  { key: "subcategory3", label: "Subcategory 3" },
   { key: "assignmentGroup", label: "Assignment group" },
+  { key: "assignedTo", label: "Assigned to" },
   { key: "impact", label: "Impact" },
   { key: "urgency", label: "Urgency" },
+  { key: "shortDescription", label: "Short description", multiline: true },
+  { key: "description", label: "Description", multiline: true },
+  {
+    key: "additionalComments",
+    label: "Additional comments (Customer visible)",
+    multiline: true,
+  },
+  { key: "workNotes", label: "Work notes", multiline: true },
+  { key: "resolutionCode", label: "Resolution code" },
+  {
+    key: "resolutionNotes",
+    label: "Resolution notes (Customer visible)",
+    multiline: true,
+  },
 ];
 
 function uniqueId(templates: TicketTemplate[]) {
@@ -45,12 +64,22 @@ function download(templates: TicketTemplate[], filename: string) {
 
 type Dialog = "import" | "export" | null;
 type ImportMode = "append" | "replace";
+type FieldEditorMode = "all" | "selected";
 const SUGGESTED_FIELDS = new Set<keyof TicketFields>([
+  "caller",
+  "onBehalfOf",
+  "location",
+  "channel",
+  "state",
   "category",
   "subcategory",
+  "subcategory2",
+  "subcategory3",
   "assignmentGroup",
+  "assignedTo",
   "impact",
   "urgency",
+  "resolutionCode",
 ]);
 
 function inheritedFields(
@@ -100,6 +129,9 @@ export function OptionsApp() {
   const [templates, setTemplates] = useState<TicketTemplate[]>([]);
   const [activeId, setActiveId] = useState("");
   const [view, setView] = useState<"tree" | "flat">("tree");
+  const [fieldEditorMode, setFieldEditorMode] =
+    useState<FieldEditorMode>("all");
+  const [fieldToAdd, setFieldToAdd] = useState<keyof TicketFields | "">("");
   const [dialog, setDialog] = useState<Dialog>(null);
   const [exportIds, setExportIds] = useState<Set<string>>(new Set());
   const [importText, setImportText] = useState("");
@@ -173,6 +205,17 @@ export function OptionsApp() {
   const updateField = (key: keyof TicketFields, value: string) =>
     active &&
     update({ fields: { ...active.fields, [key]: value || undefined } });
+  const addField = () => {
+    if (!active || !fieldToAdd) return;
+    update({ fields: { ...active.fields, [fieldToAdd]: "" } });
+    setFieldToAdd("");
+  };
+  const removeField = (key: keyof TicketFields) => {
+    if (!active) return;
+    const fields = { ...active.fields };
+    delete fields[key];
+    update({ fields });
+  };
   const add = () => {
     const id = uniqueId(templates);
     persist(
@@ -443,14 +486,72 @@ export function OptionsApp() {
                     <small>Blank fields fall back to the parent.</small>
                   </label>
                 </div>
-                <div className="section-title">
-                  <h2>Ticket fields</h2>
-                  <p>
-                    Inherited values are shown below. Typing replaces the
-                    inherited value for this template. Dynamic placeholders are
-                    replaced when you apply it.
-                  </p>
+                <div className="section-title field-section-title">
+                  <div>
+                    <h2>Ticket fields</h2>
+                    <p>
+                      Inherited values are shown below. Typing replaces the
+                      inherited value for this template. Dynamic placeholders
+                      are replaced when you apply it.
+                    </p>
+                  </div>
+                  <div
+                    className="field-mode-toggle"
+                    aria-label="Ticket field editor version"
+                  >
+                    <button
+                      type="button"
+                      className={fieldEditorMode === "all" ? "active" : ""}
+                      onClick={() => setFieldEditorMode("all")}
+                    >
+                      All fields
+                    </button>
+                    <button
+                      type="button"
+                      className={fieldEditorMode === "selected" ? "active" : ""}
+                      onClick={() => setFieldEditorMode("selected")}
+                    >
+                      Add fields
+                    </button>
+                  </div>
                 </div>
+                {fieldEditorMode === "selected" && (
+                  <div className="add-field-row">
+                    <div>
+                      <strong>Add a ticket field</strong>
+                      <span>
+                        Only fields used by this template are shown below.
+                      </span>
+                    </div>
+                    <select
+                      value={fieldToAdd}
+                      onChange={(event) =>
+                        setFieldToAdd(
+                          event.target.value as keyof TicketFields | "",
+                        )
+                      }
+                    >
+                      <option value="">Choose a field…</option>
+                      {FIELDS.filter(
+                        ({ key }) =>
+                          active.fields[key] === undefined &&
+                          inherited[key] === undefined,
+                      ).map(({ key, label }) => (
+                        <option value={key} key={key}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="primary"
+                      disabled={!fieldToAdd}
+                      onClick={addField}
+                    >
+                      Add field
+                    </button>
+                  </div>
+                )}
                 <details className="placeholder-help">
                   <summary>Dynamic placeholder reference</summary>
                   <div className="placeholder-grid">
@@ -475,7 +576,12 @@ export function OptionsApp() {
                   </p>
                 </details>
                 <div className="field-grid">
-                  {FIELDS.map(({ key, label, multiline }) => {
+                  {FIELDS.filter(
+                    ({ key }) =>
+                      fieldEditorMode === "all" ||
+                      active.fields[key] !== undefined ||
+                      inherited[key] !== undefined,
+                  ).map(({ key, label, multiline }) => {
                     const isInherited =
                       active.fields[key] === undefined &&
                       inherited[key] !== undefined;
@@ -487,11 +593,23 @@ export function OptionsApp() {
                           {isInherited && (
                             <span className="inherited-badge">Inherited</span>
                           )}
-                          {active.fields[key] !== undefined &&
+                          {fieldEditorMode === "selected" &&
+                            active.fields[key] !== undefined && (
+                              <button
+                                type="button"
+                                onClick={() => removeField(key)}
+                              >
+                                {inherited[key] !== undefined
+                                  ? "Use inherited"
+                                  : "Remove field"}
+                              </button>
+                            )}
+                          {fieldEditorMode === "all" &&
+                            active.fields[key] !== undefined &&
                             inherited[key] !== undefined && (
                               <button
                                 type="button"
-                                onClick={() => updateField(key, "")}
+                                onClick={() => removeField(key)}
                               >
                                 Use inherited
                               </button>
@@ -513,6 +631,18 @@ export function OptionsApp() {
                     );
                   })}
                 </div>
+                {fieldEditorMode === "selected" &&
+                  !FIELDS.some(
+                    ({ key }) =>
+                      active.fields[key] !== undefined ||
+                      inherited[key] !== undefined,
+                  ) && (
+                    <div className="empty-fields">
+                      <span>＋</span>
+                      <strong>No ticket fields added</strong>
+                      <p>Choose a field above to start this template.</p>
+                    </div>
+                  )}
               </div>
             </>
           ) : (

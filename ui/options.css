@@ -363,6 +363,91 @@ label small {
   font-size: 12px;
   font-weight: 700;
 }
+.field-section-title {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 24px;
+}
+.field-section-title > div:first-child {
+  min-width: 0;
+}
+.field-mode-toggle {
+  display: grid;
+  min-width: 210px;
+  grid-template-columns: 1fr 1fr;
+  padding: 3px;
+  border-radius: 8px;
+  background: #e9eef4;
+}
+.field-mode-toggle button {
+  border: 0;
+  background: transparent;
+  padding: 7px 10px;
+  color: #718198;
+  font-size: 11px;
+}
+.field-mode-toggle button.active {
+  background: #fff;
+  color: #1f67ad;
+  box-shadow: 0 1px 4px #1d35551a;
+}
+.add-field-row {
+  display: grid;
+  grid-template-columns: minmax(190px, 1fr) minmax(220px, 0.8fr) auto;
+  align-items: end;
+  gap: 12px;
+  margin-top: 18px;
+  border: 1px solid #cfe0f1;
+  border-radius: 9px;
+  background: #f6faff;
+  padding: 14px;
+}
+.add-field-row strong,
+.add-field-row span {
+  display: block;
+}
+.add-field-row strong {
+  color: #29405b;
+  font-size: 12px;
+}
+.add-field-row span {
+  margin-top: 3px;
+  color: #748399;
+  font-size: 11px;
+}
+.add-field-row select,
+.add-field-row button {
+  height: 38px;
+}
+.add-field-row button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.empty-fields {
+  display: grid;
+  min-height: 190px;
+  place-content: center;
+  justify-items: center;
+  margin-top: 18px;
+  border: 1px dashed #cad6e3;
+  border-radius: 9px;
+  color: #718198;
+  text-align: center;
+}
+.empty-fields span {
+  color: #75a9dc;
+  font-size: 28px;
+}
+.empty-fields strong {
+  margin-top: 6px;
+  color: #34465d;
+  font-size: 13px;
+}
+.empty-fields p {
+  margin: 4px 0 0;
+  font-size: 11px;
+}
 @media (max-width: 850px) {
   .options-header {
     align-items: start;
@@ -390,6 +475,14 @@ label small {
   }
   .editor-body {
     padding: 24px 18px;
+  }
+  .field-section-title,
+  .add-field-row {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+  .field-mode-toggle {
+    width: 100%;
   }
   .two-col,
   .field-grid {

@@ -7,14 +7,25 @@ import {
 
 export const TEMPLATE_STORAGE_KEY = "ticketTemplates";
 const fieldNames: (keyof TicketFields)[] = [
+  "caller",
+  "onBehalfOf",
+  "location",
   "shortDescription",
   "description",
+  "additionalComments",
   "workNotes",
+  "channel",
+  "state",
   "category",
   "subcategory",
+  "subcategory2",
+  "subcategory3",
   "assignmentGroup",
+  "assignedTo",
   "impact",
   "urgency",
+  "resolutionCode",
+  "resolutionNotes",
 ];
 
 export function cloneDefaults(): TicketTemplate[] {
@@ -65,14 +76,18 @@ export function validateTemplates(value: unknown): TicketTemplate[] {
 }
 
 export async function loadTemplates(): Promise<TicketTemplate[]> {
-  const result = await browser.storage.local.get(TEMPLATE_STORAGE_KEY);
-  if (!result[TEMPLATE_STORAGE_KEY]) {
+  const stored = browser.storage?.local
+    ? (await browser.storage.local.get(TEMPLATE_STORAGE_KEY))[
+        TEMPLATE_STORAGE_KEY
+      ]
+    : JSON.parse(localStorage.getItem(TEMPLATE_STORAGE_KEY) ?? "null");
+  if (!stored) {
     const defaults = cloneDefaults();
     await saveTemplates(defaults);
     return defaults;
   }
   try {
-    return validateTemplates(result[TEMPLATE_STORAGE_KEY]);
+    return validateTemplates(stored);
   } catch {
     return cloneDefaults();
   }
@@ -81,7 +96,11 @@ export async function loadTemplates(): Promise<TicketTemplate[]> {
 export async function saveTemplates(
   templates: TicketTemplate[],
 ): Promise<void> {
-  await browser.storage.local.set({ [TEMPLATE_STORAGE_KEY]: templates });
+  if (browser.storage?.local) {
+    await browser.storage.local.set({ [TEMPLATE_STORAGE_KEY]: templates });
+    return;
+  }
+  localStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(templates));
 }
 
 export function subscribeToTemplates(
@@ -98,6 +117,18 @@ export function subscribeToTemplates(
       /* Ignore malformed external writes. */
     }
   };
-  browser.storage.onChanged.addListener(listener);
-  return () => browser.storage.onChanged.removeListener(listener);
+  if (browser.storage?.onChanged) {
+    browser.storage.onChanged.addListener(listener);
+    return () => browser.storage.onChanged.removeListener(listener);
+  }
+  const storageListener = (event: StorageEvent) => {
+    if (event.key !== TEMPLATE_STORAGE_KEY || !event.newValue) return;
+    try {
+      callback(validateTemplates(JSON.parse(event.newValue)));
+    } catch {
+      /* Ignore malformed external writes. */
+    }
+  };
+  window.addEventListener("storage", storageListener);
+  return () => window.removeEventListener("storage", storageListener);
 }

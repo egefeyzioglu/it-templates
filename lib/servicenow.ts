@@ -1,28 +1,62 @@
-import type { TicketFields } from './templates';
+import type { TicketFields } from "./templates";
 
 type FieldKey = keyof TicketFields;
-type WritableElement = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | HTMLElement;
+type WritableElement =
+  HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | HTMLElement;
 
 const FIELD_LABELS: Record<FieldKey, string[]> = {
-  shortDescription: ['Short description'],
-  description: ['Description'],
-  workNotes: ['Work notes', 'Additional comments'],
-  category: ['Category'],
-  subcategory: ['Subcategory', 'Sub-category'],
-  assignmentGroup: ['Assignment group'],
-  impact: ['Impact'],
-  urgency: ['Urgency'],
+  caller: ["Caller"],
+  onBehalfOf: ["On behalf of"],
+  location: ["Location"],
+  shortDescription: ["Short description"],
+  description: ["Description"],
+  additionalComments: [
+    "Additional comments",
+    "Additional comments (Customer visible)",
+  ],
+  workNotes: ["Work notes"],
+  channel: ["Channel"],
+  state: ["State"],
+  category: ["Category"],
+  subcategory: ["Subcategory", "Sub-category", "Subcategory 1"],
+  subcategory2: ["Subcategory 2"],
+  subcategory3: ["Subcategory 3"],
+  assignmentGroup: ["Assignment group"],
+  assignedTo: ["Assigned to"],
+  impact: ["Impact"],
+  urgency: ["Urgency"],
+  resolutionCode: ["Resolution code"],
+  resolutionNotes: ["Resolution notes", "Resolution notes (Customer visible)"],
 };
 
 const FIELD_TOKENS: Record<FieldKey, string[]> = {
-  shortDescription: ['short_description', 'short-description', 'shortdescription'],
-  description: ['description'],
-  workNotes: ['work_notes', 'work-notes', 'comments'],
-  category: ['category'],
-  subcategory: ['subcategory', 'sub_category', 'sub-category'],
-  assignmentGroup: ['assignment_group', 'assignment-group', 'assignmentgroup'],
-  impact: ['impact'],
-  urgency: ['urgency'],
+  caller: ["caller_id", "caller"],
+  onBehalfOf: ["u_on_behalf_of", "on_behalf_of", "on-behalf-of"],
+  location: ["location_id", "location"],
+  shortDescription: [
+    "short_description",
+    "short-description",
+    "shortdescription",
+  ],
+  description: ["description"],
+  additionalComments: [
+    "comments",
+    "additional_comments",
+    "additional-comments",
+  ],
+  workNotes: ["work_notes", "work-notes"],
+  channel: ["contact_type", "channel"],
+  state: ["incident_state", "state"],
+  category: ["category"],
+  subcategory: ["subcategory", "sub_category", "sub-category"],
+  subcategory2: ["u_subcategory_2", "subcategory_2", "subcategory2"],
+  subcategory3: ["u_subcategory_3", "subcategory_3", "subcategory3"],
+  assignmentGroup: ["assignment_group", "assignment-group", "assignmentgroup"],
+  assignedTo: ["assigned_to", "assigned-to", "assignedto"],
+  impact: ["impact"],
+  urgency: ["urgency"],
+  resolutionCode: ["close_code", "resolution_code", "resolution-code"],
+  resolutionNotes: ["close_notes", "resolution_notes", "resolution-notes"],
 };
 
 // Elements can come from other frames' documents, where our realm's HTML*
@@ -33,11 +67,19 @@ function isElement(node: unknown): node is HTMLElement {
 
 function shadowRootOf(element: Element): ShadowRoot | null {
   if (element.shadowRoot) return element.shadowRoot;
-  const gecko = (element as Element & { openOrClosedShadowRoot?: ShadowRoot | null }).openOrClosedShadowRoot;
+  const gecko = (
+    element as Element & { openOrClosedShadowRoot?: ShadowRoot | null }
+  ).openOrClosedShadowRoot;
   if (gecko) return gecko;
   try {
-    type ChromeDom = { dom?: { openOrClosedShadowRoot?: (el: Element) => ShadowRoot | null } };
-    return (globalThis as { chrome?: ChromeDom }).chrome?.dom?.openOrClosedShadowRoot?.(element) ?? null;
+    type ChromeDom = {
+      dom?: { openOrClosedShadowRoot?: (el: Element) => ShadowRoot | null };
+    };
+    return (
+      (
+        globalThis as { chrome?: ChromeDom }
+      ).chrome?.dom?.openOrClosedShadowRoot?.(element) ?? null
+    );
   } catch {
     return null;
   }
@@ -46,10 +88,10 @@ function shadowRootOf(element: Element): ShadowRoot | null {
 function collectRoots(): Array<Document | ShadowRoot> {
   const roots: Array<Document | ShadowRoot> = [document];
   for (let index = 0; index < roots.length; index += 1) {
-    for (const element of Array.from(roots[index].querySelectorAll('*'))) {
+    for (const element of Array.from(roots[index].querySelectorAll("*"))) {
       const shadow = shadowRootOf(element);
       if (shadow && !roots.includes(shadow)) roots.push(shadow);
-      if (element.localName === 'iframe' || element.localName === 'frame') {
+      if (element.localName === "iframe" || element.localName === "frame") {
         try {
           const doc = (element as HTMLIFrameElement).contentDocument;
           if (doc && !roots.includes(doc)) roots.push(doc);
@@ -67,22 +109,35 @@ function escapeSelector(value: string): string {
 }
 
 function normalizeText(text: string | null | undefined): string {
-  return (text ?? '').replace(/\s+/g, ' ').trim().toLocaleLowerCase();
+  return (text ?? "").replace(/\s+/g, " ").trim().toLocaleLowerCase();
 }
 
-function findByLabel(root: Document | ShadowRoot, labels: string[]): WritableElement | null {
+function findByLabel(
+  root: Document | ShadowRoot,
+  labels: string[],
+): WritableElement | null {
   for (const labelText of labels) {
-    const labelsInRoot = Array.from(root.querySelectorAll('label'));
-    const label = labelsInRoot.find((candidate) => normalizeText(candidate.textContent) === labelText.toLocaleLowerCase());
+    const labelsInRoot = Array.from(root.querySelectorAll("label"));
+    const label = labelsInRoot.find(
+      (candidate) =>
+        normalizeText(candidate.textContent) === labelText.toLocaleLowerCase(),
+    );
     if (!label) continue;
-    const targetId = label.getAttribute('for');
-    const target = targetId ? root.querySelector(`#${escapeSelector(targetId)}`) : label.querySelector('input, textarea, select, [contenteditable="true"]');
+    const targetId = label.getAttribute("for");
+    const target = targetId
+      ? root.querySelector(`#${escapeSelector(targetId)}`)
+      : label.querySelector(
+          'input, textarea, select, [contenteditable="true"]',
+        );
     if (isElement(target)) return target;
   }
   return null;
 }
 
-function findField(key: FieldKey, roots: Array<Document | ShadowRoot>): WritableElement | null {
+function findField(
+  key: FieldKey,
+  roots: Array<Document | ShadowRoot>,
+): WritableElement | null {
   for (const root of roots) {
     const byLabel = findByLabel(root, FIELD_LABELS[key]);
     if (byLabel) return byLabel;
@@ -107,7 +162,7 @@ function findField(key: FieldKey, roots: Array<Document | ShadowRoot>): Writable
 }
 
 function notify(element: HTMLElement): void {
-  for (const type of ['input', 'change', 'blur']) {
+  for (const type of ["input", "change", "blur"]) {
     element.dispatchEvent(new Event(type, { bubbles: true, composed: true }));
   }
 }
@@ -115,11 +170,14 @@ function notify(element: HTMLElement): void {
 function setNativeValue(element: WritableElement, value: string): boolean {
   const tag = element.localName;
 
-  if (tag === 'select') {
+  if (tag === "select") {
     const select = element as HTMLSelectElement;
     const wanted = value.toLocaleLowerCase();
-    const option = Array.from(select.options).find((item) =>
-      item.value.toLocaleLowerCase() === wanted || item.text.toLocaleLowerCase() === wanted || item.text.toLocaleLowerCase().includes(wanted),
+    const option = Array.from(select.options).find(
+      (item) =>
+        item.value.toLocaleLowerCase() === wanted ||
+        item.text.toLocaleLowerCase() === wanted ||
+        item.text.toLocaleLowerCase().includes(wanted),
     );
     if (!option) return false;
     select.value = option.value;
@@ -127,13 +185,16 @@ function setNativeValue(element: WritableElement, value: string): boolean {
     return true;
   }
 
-  if (tag === 'input' || tag === 'textarea') {
+  if (tag === "input" || tag === "textarea") {
     const field = element as HTMLInputElement | HTMLTextAreaElement;
     // Use the prototype from the element's own realm so framework-managed
     // value descriptors on the instance are bypassed even in other frames.
     const view = field.ownerDocument.defaultView;
-    const ctor = tag === 'textarea' ? view?.HTMLTextAreaElement : view?.HTMLInputElement;
-    const setter = ctor ? Object.getOwnPropertyDescriptor(ctor.prototype, 'value')?.set : undefined;
+    const ctor =
+      tag === "textarea" ? view?.HTMLTextAreaElement : view?.HTMLInputElement;
+    const setter = ctor
+      ? Object.getOwnPropertyDescriptor(ctor.prototype, "value")?.set
+      : undefined;
     if (setter) setter.call(field, value);
     else field.value = value;
     notify(field);
@@ -146,10 +207,12 @@ function setNativeValue(element: WritableElement, value: string): boolean {
     return true;
   }
 
-  const inner = shadowRootOf(element)?.querySelector('input, textarea, select, [contenteditable="true"]');
+  const inner = shadowRootOf(element)?.querySelector(
+    'input, textarea, select, [contenteditable="true"]',
+  );
   if (isElement(inner)) return setNativeValue(inner, value);
 
-  if ('value' in element) {
+  if ("value" in element) {
     (element as HTMLElement & { value: string }).value = value;
     notify(element);
     return true;
@@ -167,7 +230,9 @@ export function applyTicketFields(fields: TicketFields): ApplyResult {
   const missing: FieldKey[] = [];
   const roots = collectRoots();
 
-  for (const [key, value] of Object.entries(fields) as Array<[FieldKey, string | undefined]>) {
+  for (const [key, value] of Object.entries(fields) as Array<
+    [FieldKey, string | undefined]
+  >) {
     if (value == null) continue;
     const element = findField(key, roots);
     if (element && setNativeValue(element, value)) applied.push(key);
