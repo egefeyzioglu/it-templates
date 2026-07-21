@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { browser } from "wxt/browser";
 import { isPaletteHotkey, TOGGLE_MESSAGE_TYPE } from "../lib/hotkey";
 import { applyTicketFields } from "../lib/servicenow";
+import { expandTicketFields } from "../lib/placeholders";
 import { loadTemplates, subscribeToTemplates } from "../lib/templateStorage";
 import {
   defaultTemplates,
@@ -46,14 +47,20 @@ export function TemplatePalette() {
   };
 
   const apply = (template: ResolvedTemplate) => {
-    const result = applyTicketFields(template.fields);
+    const expanded = expandTicketFields(template.fields);
+    const result = applyTicketFields(expanded.fields);
     close();
     if (result.applied.length) {
       const applied = result.applied.map((key) => FIELD_NAMES[key]).join(", ");
       const unavailable = result.missing.length
         ? ` ${result.missing.length} unavailable field${result.missing.length === 1 ? "" : "s"} skipped.`
         : "";
-      setStatus(`Applied “${template.title}”: ${applied}.${unavailable}`);
+      const unresolved = expanded.unresolved.length
+        ? ` ${expanded.unresolved.length} unknown placeholder${expanded.unresolved.length === 1 ? "" : "s"} left unchanged.`
+        : "";
+      setStatus(
+        `Applied “${template.title}”: ${applied}.${unavailable}${unresolved}`,
+      );
     } else {
       setStatus("No supported incident fields were found on this page.");
     }

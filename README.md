@@ -22,4 +22,10 @@ npm run compile
 npm run build
 ```
 
-The extension has no browser-action popup and requests no data/storage permissions. Its only UI is the isolated in-page palette.
+The extension has no browser-action popup, transmits no data, and stores templates only in local extension storage. Its only UI is the isolated in-page palette.
+
+## Dynamic placeholders
+
+Template fields may contain placeholders expanded immediately before the ticket is populated: `{{date}}`, `{{time}}`, `{{datetime}}`, `{{time|offset:+2h}}`, `{{datetime|format:DD/MM/YYYY HH:mm}}`, `{{ticket.number|default:New ticket}}`, `{{prompt:Caller name}}`, `{{page.title}}`, `{{page.url}}`, `{{selection}}`, and `{{uuid}}`.
+
+Values can use `upper`, `lower`, `trim`, and `default:text` filters. Unknown placeholders are preserved so mistakes remain visible.

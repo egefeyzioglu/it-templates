@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
+import { filters, placeholders } from "../lib/placeholders";
 import {
   cloneDefaults,
   loadTemplates,
@@ -7,6 +8,7 @@ import {
   validateTemplates,
 } from "../lib/templateStorage";
 import type { TicketFields, TicketTemplate } from "../lib/templates";
+import { PlaceholderEditor } from "./PlaceholderEditor";
 
 const FIELDS: {
   key: keyof TicketFields;
@@ -445,9 +447,33 @@ export function OptionsApp() {
                   <h2>Ticket fields</h2>
                   <p>
                     Inherited values are shown below. Typing replaces the
-                    inherited value for this template.
+                    inherited value for this template. Dynamic placeholders are
+                    replaced when you apply it.
                   </p>
                 </div>
+                <details className="placeholder-help">
+                  <summary>Dynamic placeholder reference</summary>
+                  <div className="placeholder-grid">
+                    {placeholders.flatMap((placeholder) =>
+                      placeholder.examples.map((example) => (
+                        <Fragment key={example.value}>
+                          <code>{example.value}</code>
+                          <span>{example.label}</span>
+                        </Fragment>
+                      )),
+                    )}
+                  </div>
+                  <p className="placeholder-note">
+                    Filters:{" "}
+                    {filters.map((filter, index) => (
+                      <Fragment key={filter.name}>
+                        {index > 0 && ", "}
+                        <code>{filter.example}</code> ({filter.description})
+                      </Fragment>
+                    ))}
+                    .
+                  </p>
+                </details>
                 <div className="field-grid">
                   {FIELDS.map(({ key, label, multiline }) => {
                     const isInherited =
@@ -471,38 +497,18 @@ export function OptionsApp() {
                               </button>
                             )}
                         </span>
-                        {multiline ? (
-                          <textarea
-                            className={isInherited ? "inherited-input" : ""}
-                            value={value}
-                            onChange={(event) =>
-                              updateField(key, event.target.value)
-                            }
-                            rows={6}
-                          />
-                        ) : (
-                          <>
-                            <input
-                              className={isInherited ? "inherited-input" : ""}
-                              list={
-                                SUGGESTED_FIELDS.has(key)
-                                  ? `values-${key}`
-                                  : undefined
-                              }
-                              value={value}
-                              onChange={(event) =>
-                                updateField(key, event.target.value)
-                              }
-                            />
-                            {SUGGESTED_FIELDS.has(key) && (
-                              <datalist id={`values-${key}`}>
-                                {suggestions[key].map((option) => (
-                                  <option value={option} key={option} />
-                                ))}
-                              </datalist>
-                            )}
-                          </>
-                        )}
+                        <PlaceholderEditor
+                          multiline={Boolean(multiline)}
+                          inherited={isInherited}
+                          value={value}
+                          onChange={(nextValue) => updateField(key, nextValue)}
+                          suggestions={suggestions[key]}
+                          suggestionsId={
+                            SUGGESTED_FIELDS.has(key)
+                              ? `values-${key}`
+                              : undefined
+                          }
+                        />
                       </label>
                     );
                   })}
