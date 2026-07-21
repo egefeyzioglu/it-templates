@@ -112,6 +112,26 @@ function normalizeText(text: string | null | undefined): string {
   return (text ?? "").replace(/\s+/g, " ").trim().toLocaleLowerCase();
 }
 
+function resolveLabelTarget(
+  root: Document | ShadowRoot,
+  target: WritableElement,
+): WritableElement {
+  const container = target.closest(".select2-container");
+  if (!container) return target;
+
+  const containerId = container?.id;
+  if (containerId?.startsWith("s2id_")) {
+    const selectId = containerId.slice("s2id_".length);
+    const select = root.querySelector(`#${escapeSelector(selectId)}`);
+    if (isElement(select) && select.localName === "select") return select;
+  }
+
+  const select = container?.parentElement?.querySelector(
+    "select.select2-offscreen",
+  );
+  return isElement(select) ? select : target;
+}
+
 function findByLabel(
   root: Document | ShadowRoot,
   labels: string[],
@@ -129,7 +149,7 @@ function findByLabel(
       : label.querySelector(
           'input, textarea, select, [contenteditable="true"]',
         );
-    if (isElement(target)) return target;
+    if (isElement(target)) return resolveLabelTarget(root, target);
   }
   return null;
 }
