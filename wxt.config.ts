@@ -20,6 +20,6 @@ export default defineConfig({
     }
   },
   webExt: {
-    startUrls: [pathToFileURL(resolve("new_incident_page.html")).href],
+    startUrls: ["https://uoft.me/servicenow"],
   },
 });
