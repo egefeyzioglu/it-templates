@@ -1,5 +1,3 @@
-import { resolve } from "node:path";
-import { pathToFileURL } from "node:url";
 import { defineConfig } from "wxt";
 
 export default defineConfig({
@@ -14,10 +12,10 @@ export default defineConfig({
       gecko: {
         id: "it-templates@begaydocrime.org",
         data_collection_permissions: {
-          required: ["none"]
-        }
-      }
-    }
+          required: ["none"],
+        },
+      },
+    },
   },
   webExt: {
     startUrls: ["https://uoft.me/servicenow"],
