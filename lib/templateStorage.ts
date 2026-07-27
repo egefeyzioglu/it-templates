@@ -32,15 +32,18 @@ export function cloneDefaults(): TicketTemplate[] {
   return structuredClone(defaultTemplates);
 }
 
-export function validateTemplates(value: unknown): TicketTemplate[] {
+export function validateTemplates(
+  value: unknown,
+  { allowEmpty = false }: { allowEmpty?: boolean } = {},
+): TicketTemplate[] {
   const candidates = Array.isArray(value)
     ? value
     : value &&
         typeof value === "object" &&
         Array.isArray((value as { templates?: unknown }).templates)
       ? (value as { templates: unknown[] }).templates
-      : [];
-  if (!candidates.length)
+      : null;
+  if (!candidates || (!allowEmpty && !candidates.length))
     throw new Error("The file does not contain any templates.");
   const ids = new Set<string>();
   for (const value of candidates) {
@@ -87,7 +90,7 @@ export async function loadTemplates(): Promise<TicketTemplate[]> {
     return defaults;
   }
   try {
-    return validateTemplates(stored);
+    return validateTemplates(stored, { allowEmpty: true });
   } catch {
     return cloneDefaults();
   }
@@ -112,7 +115,11 @@ export function subscribeToTemplates(
   ) => {
     if (area !== "local" || !changes[TEMPLATE_STORAGE_KEY]?.newValue) return;
     try {
-      callback(validateTemplates(changes[TEMPLATE_STORAGE_KEY].newValue));
+      callback(
+        validateTemplates(changes[TEMPLATE_STORAGE_KEY].newValue, {
+          allowEmpty: true,
+        }),
+      );
     } catch {
       /* Ignore malformed external writes. */
     }
@@ -124,7 +131,9 @@ export function subscribeToTemplates(
   const storageListener = (event: StorageEvent) => {
     if (event.key !== TEMPLATE_STORAGE_KEY || !event.newValue) return;
     try {
-      callback(validateTemplates(JSON.parse(event.newValue)));
+      callback(
+        validateTemplates(JSON.parse(event.newValue), { allowEmpty: true }),
+      );
     } catch {
       /* Ignore malformed external writes. */
     }

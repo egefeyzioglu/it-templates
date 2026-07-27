@@ -209,6 +209,18 @@ button {
   color: #64748b;
   font-size: 11px;
 }
+.library-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.library-foot .danger {
+  color: #bf3d46;
+}
+.library-foot button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
 .editor {
   min-width: 0;
 }

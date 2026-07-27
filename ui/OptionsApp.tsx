@@ -255,6 +255,17 @@ export function OptionsApp() {
     persist(next, "Template deleted");
     setActiveId(next[0]?.id ?? "");
   };
+  const removeAll = () => {
+    if (
+      !templates.length ||
+      !confirm(
+        `Delete all ${templates.length} templates? This cannot be undone.`,
+      )
+    )
+      return;
+    persist([], "All templates deleted");
+    setActiveId("");
+  };
   const reset = () => {
     if (
       !confirm(
@@ -403,7 +414,16 @@ export function OptionsApp() {
             ))}
           </div>
           <div className="library-foot">
-            <button onClick={reset}>Restore defaults</button>
+            <div className="library-actions">
+              <button onClick={reset}>Restore defaults</button>
+              <button
+                className="danger"
+                disabled={!templates.length}
+                onClick={removeAll}
+              >
+                Delete all
+              </button>
+            </div>
             <span>
               {view === "tree" && !query
                 ? "Grouped by inheritance"
