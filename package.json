@@ -7,6 +7,8 @@
     "dev": "wxt --browser chrome",
     "build": "wxt build --browser chrome",
     "build:firefox": "wxt build --browser firefox --mv3",
+    "build:edge": "wxt build --browser edge",
+    "build:all": "npm run build:firefox && npm run build && npm run build:edge",
     "compile": "wxt prepare && tsc --noEmit",
     "zip": "wxt zip --browser chrome"
   },
